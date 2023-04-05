@@ -30,7 +30,7 @@
 // Pin 19: RXD
 
 #define SYSTEM_CLK 30000000L
-#define DEFAULT_F 15920L
+#define DEFAULT_F 14910L
 
 #define OUT0 GPIO_B15
 #define OUT1 GPIO_B1
