@@ -305,7 +305,7 @@ void main(void)
 				direction = 0;
 				LCDprint("STOP", 1, 1);
 				while (TRACK_B == 0); // wait for release
-				delayms(100); // debounce delay
+				delayms(50); // debounce delay
 			}
 		}
 
@@ -353,7 +353,7 @@ void main(void)
 				LCDprint("TRACKING", 1, 1);
 				while (TRACK_B == 0); // wait for release
 				direction = 6;
-				delayms(100); // debounce delay
+				delayms(50); // debounce delay
 			}
 		}
 	}
