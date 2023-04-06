@@ -16,12 +16,13 @@ Linker script and memory map
 
 LOAD init.o
 LOAD main.o
+LOAD lcd.o
 LOAD serial.o
 LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\arm-none-eabi\lib\thumb\v6-m\nofp\libnosys.a
 LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a
                 0x00000000                . = ORIGIN (flash)
 
-.text           0x00000000      0xdd0
+.text           0x00000000     0x116c
  *(.vectors)
  .vectors       0x00000000       0xc0 init.o
                 0x00000000                Vectors
@@ -30,82 +31,94 @@ LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-no
                 0x000000c0                clock_init
                 0x00000114                init
                 0x0000018c                Default_Handler
- .text          0x00000194      0x6b4 main.o
+ .text          0x00000194      0x768 main.o
                 0x00000194                ConfigPins
-                0x00000218                InitTimer
-                0x00000310                Reload_SCTIMER
-                0x0000035c                wait_1ms
-                0x0000039c                delayms
-                0x000003be                ADC_Calibration
-                0x000003f4                InitADC
-                0x00000464                ReadADC
-                0x000004dc                STC_IRQ_Handler
-                0x000006d0                main
- .text          0x00000848      0x3b0 serial.o
-                0x00000848                initUART
-                0x00000938                UART0_isr
-                0x00000970                putBuf
-                0x000009b8                getBuf
-                0x00000a08                rx_count
-                0x00000a1c                eputc
-                0x00000a60                eputs
-                0x00000a8c                egetc
-                0x00000aa4                egets
-                0x00000b34                printString
-                0x00000b58                PrintNumber
- .text          0x00000bf8      0x1d4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
-                0x00000bf8                __divsi3
-                0x00000bf8                __aeabi_idiv
-                0x00000dc4                __aeabi_idivmod
- .text          0x00000dcc        0x4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
-                0x00000dcc                __aeabi_idiv0
-                0x00000dcc                __aeabi_ldiv0
+                0x00000248                InitTimer
+                0x00000340                Reload_SCTIMER
+                0x0000038c                wait_1ms
+                0x000003cc                delayms
+                0x000003ee                ADC_Calibration
+                0x00000424                InitADC
+                0x00000494                ReadADC
+                0x0000050c                ReadJoystick
+                0x00000544                STC_IRQ_Handler
+                0x00000738                main
+ .text          0x000008fc      0x2e8 lcd.o
+                0x000008fc                Delay_us
+                0x00000964                waitms
+                0x000009b0                LCD_pulse
+                0x000009d0                LCD_byte
+                0x00000ac4                WriteData
+                0x00000af4                WriteCommand
+                0x00000b24                LCD_4BIT
+                0x00000b68                LCDprint
+ .text          0x00000be4      0x3b0 serial.o
+                0x00000be4                initUART
+                0x00000cd4                UART0_isr
+                0x00000d0c                putBuf
+                0x00000d54                getBuf
+                0x00000da4                rx_count
+                0x00000db8                eputc
+                0x00000dfc                eputs
+                0x00000e28                egetc
+                0x00000e40                egets
+                0x00000ed0                printString
+                0x00000ef4                PrintNumber
+ .text          0x00000f94      0x1d4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
+                0x00000f94                __divsi3
+                0x00000f94                __aeabi_idiv
+                0x00001160                __aeabi_idivmod
+ .text          0x00001168        0x4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
+                0x00001168                __aeabi_idiv0
+                0x00001168                __aeabi_ldiv0
 
-.glue_7         0x00000dd0        0x0
- .glue_7        0x00000dd0        0x0 linker stubs
+.glue_7         0x0000116c        0x0
+ .glue_7        0x0000116c        0x0 linker stubs
 
-.glue_7t        0x00000dd0        0x0
- .glue_7t       0x00000dd0        0x0 linker stubs
+.glue_7t        0x0000116c        0x0
+ .glue_7t       0x0000116c        0x0 linker stubs
 
-.vfp11_veneer   0x00000dd0        0x0
- .vfp11_veneer  0x00000dd0        0x0 linker stubs
+.vfp11_veneer   0x0000116c        0x0
+ .vfp11_veneer  0x0000116c        0x0 linker stubs
 
-.v4_bx          0x00000dd0        0x0
- .v4_bx         0x00000dd0        0x0 linker stubs
+.v4_bx          0x0000116c        0x0
+ .v4_bx         0x0000116c        0x0 linker stubs
 
-.iplt           0x00000dd0        0x0
- .iplt          0x00000dd0        0x0 init.o
+.iplt           0x0000116c        0x0
+ .iplt          0x0000116c        0x0 init.o
 
-.rel.dyn        0x00000dd0        0x0
- .rel.iplt      0x00000dd0        0x0 init.o
+.rel.dyn        0x0000116c        0x0
+ .rel.iplt      0x0000116c        0x0 init.o
 
-.rodata         0x00000dd0      0x1e9
- .rodata        0x00000dd0      0x1d2 main.o
- *fill*         0x00000fa2        0x2 
- .rodata        0x00000fa4       0x15 serial.o
+.rodata         0x0000116c       0xa5
+ .rodata        0x0000116c       0x8d main.o
+ *fill*         0x000011f9        0x3 
+ .rodata        0x000011fc       0x15 serial.o
                 0x10000000                . = ORIGIN (ram)
 
-.data           0x10000000        0x0 load address 0x00000fb9
-                0x00000fb9                INIT_DATA_VALUES = LOADADDR (.data)
+.data           0x10000000        0x0 load address 0x00001211
+                0x00001211                INIT_DATA_VALUES = LOADADDR (.data)
                 0x10000000                INIT_DATA_START = .
  *(.data)
  .data          0x10000000        0x0 init.o
  .data          0x10000000        0x0 main.o
+ .data          0x10000000        0x0 lcd.o
  .data          0x10000000        0x0 serial.o
  .data          0x10000000        0x0 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
  .data          0x10000000        0x0 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
                 0x10000000                INIT_DATA_END = .
                 0x10000000                BSS_START = .
 
-.igot.plt       0x10000000        0x0 load address 0x00000fb9
+.igot.plt       0x10000000        0x0 load address 0x00001211
  .igot.plt      0x10000000        0x0 init.o
 
-.bss            0x10000000       0x24 load address 0x00000fb9
+.bss            0x10000000       0x24 load address 0x00001211
  *(.bss)
  .bss           0x10000000        0x0 init.o
  .bss           0x10000000        0x8 main.o
                 0x10000000                count
                 0x10000004                direction
+ .bss           0x10000008        0x0 lcd.o
  .bss           0x10000008       0x1c serial.o
  .bss           0x10000024        0x0 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
  .bss           0x10000024        0x0 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
@@ -113,41 +126,49 @@ LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-no
 OUTPUT(main.elf elf32-littlearm)
 LOAD linker stubs
 
-.debug_info     0x00000000      0x5d8
+.debug_info     0x00000000      0x776
  .debug_info    0x00000000      0x107 init.o
- .debug_info    0x00000107      0x1c6 main.o
- .debug_info    0x000002cd      0x30b serial.o
+ .debug_info    0x00000107      0x1db main.o
+ .debug_info    0x000002e2      0x189 lcd.o
+ .debug_info    0x0000046b      0x30b serial.o
 
-.debug_abbrev   0x00000000      0x3b5
+.debug_abbrev   0x00000000      0x46b
  .debug_abbrev  0x00000000       0xd5 init.o
  .debug_abbrev  0x000000d5      0x156 main.o
- .debug_abbrev  0x0000022b      0x18a serial.o
+ .debug_abbrev  0x0000022b       0xb6 lcd.o
+ .debug_abbrev  0x000002e1      0x18a serial.o
 
-.debug_aranges  0x00000000       0x60
+.debug_aranges  0x00000000       0x80
  .debug_aranges
                 0x00000000       0x20 init.o
  .debug_aranges
                 0x00000020       0x20 main.o
  .debug_aranges
-                0x00000040       0x20 serial.o
+                0x00000040       0x20 lcd.o
+ .debug_aranges
+                0x00000060       0x20 serial.o
 
-.debug_line     0x00000000      0x605
+.debug_line     0x00000000      0x845
  .debug_line    0x00000000       0xac init.o
- .debug_line    0x000000ac      0x374 main.o
- .debug_line    0x00000420      0x1e5 serial.o
+ .debug_line    0x000000ac      0x3d2 main.o
+ .debug_line    0x0000047e      0x1e2 lcd.o
+ .debug_line    0x00000660      0x1e5 serial.o
 
-.debug_str      0x00000000      0x2d6
+.debug_str      0x00000000      0x333
  .debug_str     0x00000000      0x112 init.o
                                 0x124 (size before relaxing)
- .debug_str     0x00000112      0x103 main.o
-                                0x187 (size before relaxing)
- .debug_str     0x00000215       0xc1 serial.o
+ .debug_str     0x00000112       0xfc main.o
+                                0x180 (size before relaxing)
+ .debug_str     0x0000020e       0x64 lcd.o
+                                0x12d (size before relaxing)
+ .debug_str     0x00000272       0xc1 serial.o
                                 0x182 (size before relaxing)
 
 .comment        0x00000000       0x49
  .comment       0x00000000       0x49 init.o
                                  0x4a (size before relaxing)
  .comment       0x00000049       0x4a main.o
+ .comment       0x00000049       0x4a lcd.o
  .comment       0x00000049       0x4a serial.o
 
 .ARM.attributes
@@ -157,17 +178,20 @@ LOAD linker stubs
  .ARM.attributes
                 0x0000002c       0x2c main.o
  .ARM.attributes
-                0x00000058       0x2c serial.o
+                0x00000058       0x2c lcd.o
  .ARM.attributes
-                0x00000084       0x1e C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
+                0x00000084       0x2c serial.o
  .ARM.attributes
-                0x000000a2       0x1e C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
+                0x000000b0       0x1e C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
+ .ARM.attributes
+                0x000000ce       0x1e C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
 
-.debug_frame    0x00000000      0x330
+.debug_frame    0x00000000      0x458
  .debug_frame   0x00000000       0x68 init.o
- .debug_frame   0x00000068      0x13c main.o
- .debug_frame   0x000001a4      0x16c serial.o
- .debug_frame   0x00000310       0x20 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
+ .debug_frame   0x00000068      0x15c main.o
+ .debug_frame   0x000001c4      0x108 lcd.o
+ .debug_frame   0x000002cc      0x16c serial.o
+ .debug_frame   0x00000438       0x20 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
 
 Cross Reference Table
 
@@ -177,28 +201,37 @@ BSS_END                                           init.o
 BSS_START                                         init.o
 ConfigPins                                        main.o
 Default_Handler                                   init.o
+Delay_us                                          lcd.o
 INIT_DATA_END                                     init.o
 INIT_DATA_START                                   init.o
 INIT_DATA_VALUES                                  init.o
 InitADC                                           main.o
 InitTimer                                         main.o
-PrintNumber                                       serial.o
+LCD_4BIT                                          lcd.o
                                                   main.o
+LCD_byte                                          lcd.o
+LCD_pulse                                         lcd.o
+LCDprint                                          lcd.o
+                                                  main.o
+PrintNumber                                       serial.o
 ReadADC                                           main.o
+ReadJoystick                                      main.o
 Reload_SCTIMER                                    main.o
 STC_IRQ_Handler                                   main.o
                                                   init.o
 UART0_isr                                         serial.o
                                                   init.o
 Vectors                                           init.o
+WriteCommand                                      lcd.o
+WriteData                                         lcd.o
 __aeabi_idiv                                      C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
                                                   serial.o
+                                                  lcd.o
                                                   main.o
 __aeabi_idiv0                                     C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
                                                   C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
 __aeabi_idivmod                                   C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
                                                   serial.o
-                                                  main.o
 __aeabi_ldiv0                                     C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
 __divsi3                                          C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
 clock_init                                        init.o
@@ -208,7 +241,6 @@ direction                                         main.o
 egetc                                             serial.o
 egets                                             serial.o
 eputc                                             serial.o
-                                                  main.o
 eputs                                             serial.o
                                                   main.o
 getBuf                                            serial.o
@@ -221,3 +253,4 @@ printString                                       serial.o
 putBuf                                            serial.o
 rx_count                                          serial.o
 wait_1ms                                          main.o
+waitms                                            lcd.o

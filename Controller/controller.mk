@@ -11,18 +11,21 @@ LIBPATH1=$(subst \libgcc.a,,$(shell dir /s /b "$(GCCPATH)*libgcc.a" | find "v6-m
 LIBPATH2=$(subst \libc_nano.a,,$(shell dir /s /b "$(GCCPATH)*libc_nano.a" | find "v6-m"))
 LIBSPEC=-L"$(LIBPATH1)" -L"$(LIBPATH2)"
 
-OBJS=init.o	main.o serial.o
+OBJS=init.o main.o lcd.o serial.o
 
 main.elf : $(OBJS)
 	$(LD) $(OBJS) $(LIBSPEC) -nostdlib -lnosys -lgcc -T lpc824_linker_script.ld --cref -Map main.map -o main.elf
 	arm-none-eabi-objcopy -O ihex main.elf main.hex
 	@echo Success!
 
-main.o: main.c
+main.o: main.c lcd.h
 	$(CC) -c $(CCFLAGS) main.c -o main.o
 
 init.o: init.c
 	$(CC) -c $(CCFLAGS) init.c -o init.o
+
+lcd.o: lcd.c lcd.h
+	$(CC) -c $(CCFLAGS) lcd.c -o lcd.o
 
 serial.o: serial.c
 	$(CC) -c $(CCFLAGS) serial.c -o serial.o

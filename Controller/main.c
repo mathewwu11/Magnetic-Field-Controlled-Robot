@@ -6,6 +6,7 @@
 
 #include "lpc824.h"
 #include "serial.h"
+#include "lcd.h"
 
 // LPC824 pinout:
 //                             --------
@@ -31,7 +32,6 @@
 
 #define SYSTEM_CLK 30000000L
 #define DEFAULT_F 14910L
-#define F_CPU 60000000L
 
 #define OUT0 GPIO_B15
 #define OUT1 GPIO_B1
@@ -49,6 +49,18 @@ void ConfigPins(void)
 	GPIO_DIR0 |= BIT1;
 
 	GPIO_DIR0 &= ~(BIT13); 	// Configure PIO0_13 as input.
+
+	// Disable SWCLK and SWDIO on pins 7 and 8. They iare enabled by default:
+	SWM_PINENABLE0 |= BIT4; // Disable SWCLK
+	SWM_PINENABLE0 |= BIT5; // Disable SWDIO
+
+	// Configure the pins connected to the LCD as outputs
+	GPIO_DIR0 |= BIT9; // Used for LCD_RS  Pin 13 of TSSOP20 package.
+	GPIO_DIR0 |= BIT8; // Used for LCD_E.  Pin 14 of TSSOP20 package.
+	GPIO_DIR0 |= BIT10;  // Used for LCD_D7. Pin 10 of TSSOP20 package. WARNING: NEEDS PULL-UP Resistor to VDD.
+	GPIO_DIR0 |= BIT11;  // Used for LCD_D6. Pin 9 of TSSOP20 package. WARNING: NEEDS PULL-UP Resistor to VDD.
+	GPIO_DIR0 |= BIT2; // Used for LCD_D5. Pin 8 of TSSOP20 package.
+	GPIO_DIR0 |= BIT3; // Used for LCD_D4. Pin 7 of TSSOP20 package.
 }
 
 void InitTimer(void)
@@ -168,6 +180,13 @@ int ReadADC(int channel)
 	return ( (ADC_SEQA_GDAT >> 4) & 0xfff);
 }
 
+int ReadJoystick(int channel){
+	int j = ReadADC(channel);
+	int v = (j*33000)/0xfff;
+
+	return v;
+}
+
 void STC_IRQ_Handler(void)
 {
 	SCTIMER_EVFLAG = 0x01; // Clear interrupt flag
@@ -247,11 +266,13 @@ void STC_IRQ_Handler(void)
 		}
 		// TRACKING
 		case 6: {
+			// while tracking, controller sends a constant 14910 Hz signal
 			OUT0 =! OUT0;
 			OUT1 =! OUT0;
 			count = 0;
 			break;
 		}
+
 		default: {
 			OUT0 = 0;
 			OUT0 = 0;
@@ -265,44 +286,74 @@ void STC_IRQ_Handler(void)
 
 void main(void)
 {
-	int j, x, y;
+	int x, y;
 	
+	// Initialization
 	ConfigPins();	
 	InitTimer();
 	initUART(115200);
+	InitADC();
+	LCD_4BIT();
 	enable_interrupts();
+	LCDprint("STOP", 1, 1);
 
-	delayms(500); // Give PuTTY time to start
-	eputs("Frequency generator using LPC824.  Output is in pin 11.\r\n");
 	while(1) {
+		// TRACKING
 		if (direction == 6) {
-			while (TRACK_B == 0){
+			// if joystick is pressed, send STOP and enter command mode
+			if (TRACK_B == 0){
 				direction = 0;
+				LCDprint("STOP", 1, 1);
+				while (TRACK_B == 0); // wait for release
+				delayms(100); // debounce delay
 			}
 		}
-		else {
-			j=ReadADC(9);
-			x=(j*33000)/0xfff * 10;
-			j=ReadADC(3);
-			y=(j*33000)/0xfff * 10;
 
-			if (x < 3){
+		// COMMAND
+		else {
+			// if robot is not currently stopped, send STOP
+			if (direction != 0){
+				direction = 0;
+				LCDprint("STOP", 1, 1);
+			}
+			x = ReadJoystick(9);
+			y = ReadJoystick(3);
+
+			// LEFT
+			if (y < 3000){
 				direction = 1;
+				LCDprint("LEFT", 1, 1);
+				while (y < 3000) y = ReadJoystick(3);
 			}
-			if (x > 30){
+
+			// RIGHT
+			if (y > 30000){
 				direction = 2;
+				LCDprint("RIGHT", 1, 1);
+				while (y > 30000) y = ReadJoystick(3);
 			}
-			if (y < 3){
+
+			// FORWARD
+			if (x > 30000){
 				direction = 3;
+				LCDprint("FORWARD", 1, 1);
+				while (x > 30000) x = ReadJoystick(9);
 			}
-			if (y > 30){
+
+			// REVERSE
+			if (x < 3000){
 				direction = 4;
+				LCDprint("BACKWARD", 1, 1);
+				while (x < 3000) x = ReadJoystick(9);
 			}
+
+			// if joystick is pressed, send TRACK and enter tracking mode
 			if (TRACK_B == 0){
-				while (TRACK_B == 0){
-					direction = 5;
-				}
+				direction = 5;
+				LCDprint("TRACKING", 1, 1);
+				while (TRACK_B == 0); // wait for release
 				direction = 6;
+				delayms(100); // debounce delay
 			}
 		}
 	}
