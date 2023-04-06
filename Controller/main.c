@@ -6,6 +6,7 @@
 
 #include "lpc824.h"
 #include "serial.h"
+#include "lcd.h"
 
 // LPC824 pinout:
 //                             --------
@@ -30,13 +31,12 @@
 // Pin 19: RXD
 
 #define SYSTEM_CLK 30000000L
-#define DEFAULT_F 15920L
+#define DEFAULT_F 14910L
 
 #define OUT0 GPIO_B15
 #define OUT1 GPIO_B1
 
-#define LEFT_B GPIO_B23
-#define RIGHT_B GPIO_B13
+#define TRACK_B GPIO_B13
 
 unsigned int count = 0;
 unsigned int direction = 0;
@@ -48,8 +48,19 @@ void ConfigPins(void)
 	GPIO_DIR0 |= BIT15; 
 	GPIO_DIR0 |= BIT1;
 
-	GPIO_DIR0 &= ~(BIT23); // Configure PIO0_23 as input.
-	GPIO_DIR0 &= ~(BIT13); // Configure PIO0_13 as input.
+	GPIO_DIR0 &= ~(BIT13); 	// Configure PIO0_13 as input.
+
+	// Disable SWCLK and SWDIO on pins 7 and 8. They iare enabled by default:
+	SWM_PINENABLE0 |= BIT4; // Disable SWCLK
+	SWM_PINENABLE0 |= BIT5; // Disable SWDIO
+
+	// Configure the pins connected to the LCD as outputs
+	GPIO_DIR0 |= BIT9; // Used for LCD_RS  Pin 13 of TSSOP20 package.
+	GPIO_DIR0 |= BIT8; // Used for LCD_E.  Pin 14 of TSSOP20 package.
+	GPIO_DIR0 |= BIT10;  // Used for LCD_D7. Pin 10 of TSSOP20 package. WARNING: NEEDS PULL-UP Resistor to VDD.
+	GPIO_DIR0 |= BIT11;  // Used for LCD_D6. Pin 9 of TSSOP20 package. WARNING: NEEDS PULL-UP Resistor to VDD.
+	GPIO_DIR0 |= BIT2; // Used for LCD_D5. Pin 8 of TSSOP20 package.
+	GPIO_DIR0 |= BIT3; // Used for LCD_D4. Pin 7 of TSSOP20 package.
 }
 
 void InitTimer(void)
@@ -113,61 +124,155 @@ void delayms(int len)
 	while(len--) wait_1ms();
 }
 
+/* Start ADC calibration */
+void ADC_Calibration(void)
+{
+	unsigned int saved_ADC_CTRL;
+
+	// Follow the instructions from the user manual (21.3.4 Hardware self-calibration)
+	
+	//To calibrate the ADC follow these steps:
+	
+	//1. Save the current contents of the ADC CTRL register if different from default.	
+	saved_ADC_CTRL=ADC_CTRL;
+	// 2. In a single write to the ADC CTRL register, do the following to start the
+	//    calibration:
+	//    � Set the calibration mode bit CALMODE.
+	//    � Write a divider value to the CLKDIV bit field that divides the system
+	//      clock to yield an ADC clock of about 500 kHz.
+	//    � Clear the LPWR bit.
+	ADC_CTRL = BIT30 | ((300/5)-1); // BIT30=CALMODE, BIT10=LPWRMODE, BIT7:0=CLKDIV
+	// 3. Poll the CALMODE bit until it is cleared.
+	while(ADC_CTRL&BIT30);
+	// Before launching a new A/D conversion, restore the contents of the CTRL
+	// register or use the default values.
+	ADC_CTRL=saved_ADC_CTRL;
+}
+
+
+void InitADC(void)
+{
+	// Will use pins 1 and 2 of TSSOP-20 package (PIO_23 and PIO_17) for ADC.
+	// These correspond to ADC Channel 3 and 9.  Also connect the
+	// VREFN pin (pin 17 of TSSOP-20) to GND, and VREFP the
+	// pin (pin 17 of TSSOP-20) to VDD (3.3V).
+	
+	SYSCON_PDRUNCFG &= ~BIT4; // Power up the ADC
+	SYSCON_SYSAHBCLKCTRL |= BIT24;// Start the ADC Clocks
+	ADC_Calibration();
+	ADC_SEQA_CTRL &= ~BIT31; // Ensure SEQA_ENA is disabled before making changes	
+	
+	ADC_CTRL =1;// Set the ADC Clock divisor
+	SWM_PINENABLE0 &= ~BIT16; // Enable the ADC function on PIO_23 (ADC_3, pin 1 of TSSOP20)	
+	SWM_PINENABLE0 &= ~BIT22; // Enable the ADC function on PIO_17 (ADC_9, pin 9 of TSSOP20)	
+}
+
+// WARNING: in order to use the ADC with other pins, the pins need to be configured in
+// the function above.
+int ReadADC(int channel)
+{
+	ADC_SEQA_CTRL &= ~BIT31; // Ensure SEQA_ENA is disabled before making changes
+	ADC_SEQA_CTRL &= 0xfffff000; // Deselect all previously selected channels	
+	ADC_SEQA_CTRL |= (1<<channel); // Select Channel	
+	ADC_SEQA_CTRL |= BIT31 + BIT18; // Set SEQA and Trigger polarity bits
+	ADC_SEQA_CTRL |= BIT26; // Start a conversion:
+	while( (ADC_SEQA_GDAT & BIT31)==0); // Wait for data valid
+	return ( (ADC_SEQA_GDAT >> 4) & 0xfff);
+}
+
+int ReadJoystick(int channel){
+	int j = ReadADC(channel);
+	int v = (j*33000)/0xfff;
+
+	return v;
+}
+
 void STC_IRQ_Handler(void)
 {
 	SCTIMER_EVFLAG = 0x01; // Clear interrupt flag
 	
 	switch (direction){
+		// STOP
 		case 0: {
+			if (count < 100) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// LEFT
+		case 1: {
+			if (count < 200) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// RIGHT
+		case 2: {
+			if (count < 300) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// FORWARD
+		case 3: {
+			if (count < 400) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// BACKWARD
+		case 4: {
+			if (count < 500) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// TRACK
+		case 5: {
+			if (count < 650) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// TRACKING
+		case 6: {
+			// while tracking, controller sends a constant 14910 Hz signal
 			OUT0 =! OUT0;
 			OUT1 =! OUT0;
 			count = 0;
 			break;
 		}
-		case 1: {
-			if (count < 10) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
-			break;
-		}
-		case 2: {
-			if (count < 20) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
-			break;
-		}
-		case 3: {
-			if (count < 30) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
-			break;
-		}
-		case 4: {
-			if (count < 40) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
-			break;
-		}
+
 		default: {
 			OUT0 = 0;
 			OUT0 = 0;
@@ -176,54 +281,80 @@ void STC_IRQ_Handler(void)
 	}
 
 	count++;
-	if (count == 60) count = 0;
-}
-
-int myAtoi(char *str)
-{
-    int i, res=0;
-    for (i=0; str[i]!='\0'; ++i) res=res*10+(str[i]-'0');
-    return res;
+	if (count == 800) count = 0;
 }
 
 void main(void)
 {
-	int newF;
-	char buff2[100];
-	unsigned long reload;
+	int x, y;
 	
+	// Initialization
 	ConfigPins();	
 	InitTimer();
 	initUART(115200);
+	InitADC();
+	LCD_4BIT();
 	enable_interrupts();
+	LCDprint("STOP", 1, 1);
 
-	delayms(500); // Give PuTTY time to start
-	eputs("Frequency generator using LPC824.  Output is in pin 11.\r\n");
 	while(1) {
-		direction = 0;
-		while (LEFT_B == 0){
-			direction = 1;
+		// TRACKING
+		if (direction == 6) {
+			// if joystick is pressed, send STOP and enter command mode
+			if (TRACK_B == 0){
+				direction = 0;
+				LCDprint("STOP", 1, 1);
+				while (TRACK_B == 0); // wait for release
+				delayms(100); // debounce delay
+			}
 		}
-		while (RIGHT_B == 0){
-			direction = 2;
+
+		// COMMAND
+		else {
+			// if robot is not currently stopped, send STOP
+			if (direction != 0){
+				direction = 0;
+				LCDprint("STOP", 1, 1);
+			}
+			x = ReadJoystick(9);
+			y = ReadJoystick(3);
+
+			// LEFT
+			if (y < 3000){
+				direction = 1;
+				LCDprint("LEFT", 1, 1);
+				while (y < 3000) y = ReadJoystick(3);
+			}
+
+			// RIGHT
+			if (y > 30000){
+				direction = 2;
+				LCDprint("RIGHT", 1, 1);
+				while (y > 30000) y = ReadJoystick(3);
+			}
+
+			// FORWARD
+			if (x > 30000){
+				direction = 3;
+				LCDprint("FORWARD", 1, 1);
+				while (x > 30000) x = ReadJoystick(9);
+			}
+
+			// REVERSE
+			if (x < 3000){
+				direction = 4;
+				LCDprint("BACKWARD", 1, 1);
+				while (x < 3000) x = ReadJoystick(9);
+			}
+
+			// if joystick is pressed, send TRACK and enter tracking mode
+			if (TRACK_B == 0){
+				direction = 5;
+				LCDprint("TRACKING", 1, 1);
+				while (TRACK_B == 0); // wait for release
+				direction = 6;
+				delayms(100); // debounce delay
+			}
 		}
 	}
-	/*
-	while(1)	
-	{
-	    eputs("\r\nNew Frequency: ");
-	    egets(buff2, 100-1);
-	    newF=myAtoi(buff2);
-	    if(newF>300000L)
-	    {
-	       eputs("Warning: High frequencies will cause the interrupt service routine for\r\n"
-	             "the timer to take all available processor time.  Capping to 300000Hz.\r\n");
-	       newF=300000L;
-	    }
-	    reload=SYSTEM_CLK/(newF*2L);
-	    eputs("\r\nFrequency set to: ");
-        PrintNumber(SYSTEM_CLK/(reload*2L), 10, 1);
-	    Reload_SCTIMER(reload);
-	}
-	*/
 }
