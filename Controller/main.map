@@ -21,7 +21,7 @@ LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\arm-none-eabi\
 LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a
                 0x00000000                . = ORIGIN (flash)
 
-.text           0x00000000      0xb38
+.text           0x00000000      0xc5c
  *(.vectors)
  .vectors       0x00000000       0xc0 init.o
                 0x00000000                Vectors
@@ -30,61 +30,61 @@ LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-no
                 0x000000c0                clock_init
                 0x00000114                init
                 0x0000018c                Default_Handler
- .text          0x00000194      0x41c main.o
+ .text          0x00000194      0x540 main.o
                 0x00000194                ConfigPins
-                0x000001ec                InitTimer
-                0x000002e4                Reload_SCTIMER
-                0x00000330                wait_1ms
-                0x00000370                delayms
-                0x00000392                STC_IRQ_Handler
-                0x00000500                myAtoi
-                0x00000548                main
- .text          0x000005b0      0x3b0 serial.o
-                0x000005b0                initUART
-                0x000006a0                UART0_isr
-                0x000006d8                putBuf
-                0x00000720                getBuf
-                0x00000770                rx_count
-                0x00000784                eputc
-                0x000007c8                eputs
-                0x000007f4                egetc
-                0x0000080c                egets
-                0x0000089c                printString
-                0x000008c0                PrintNumber
- .text          0x00000960      0x1d4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
-                0x00000960                __divsi3
-                0x00000960                __aeabi_idiv
-                0x00000b2c                __aeabi_idivmod
- .text          0x00000b34        0x4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
-                0x00000b34                __aeabi_idiv0
-                0x00000b34                __aeabi_ldiv0
+                0x00000218                InitTimer
+                0x00000310                Reload_SCTIMER
+                0x0000035c                wait_1ms
+                0x0000039c                delayms
+                0x000003be                STC_IRQ_Handler
+                0x000005b4                myAtoi
+                0x000005fc                main
+ .text          0x000006d4      0x3b0 serial.o
+                0x000006d4                initUART
+                0x000007c4                UART0_isr
+                0x000007fc                putBuf
+                0x00000844                getBuf
+                0x00000894                rx_count
+                0x000008a8                eputc
+                0x000008ec                eputs
+                0x00000918                egetc
+                0x00000930                egets
+                0x000009c0                printString
+                0x000009e4                PrintNumber
+ .text          0x00000a84      0x1d4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_divsi3.o)
+                0x00000a84                __divsi3
+                0x00000a84                __aeabi_idiv
+                0x00000c50                __aeabi_idivmod
+ .text          0x00000c58        0x4 C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-none-eabi\10.3.1\thumb\v6-m\nofp\libgcc.a(_dvmd_tls.o)
+                0x00000c58                __aeabi_idiv0
+                0x00000c58                __aeabi_ldiv0
 
-.glue_7         0x00000b38        0x0
- .glue_7        0x00000b38        0x0 linker stubs
+.glue_7         0x00000c5c        0x0
+ .glue_7        0x00000c5c        0x0 linker stubs
 
-.glue_7t        0x00000b38        0x0
- .glue_7t       0x00000b38        0x0 linker stubs
+.glue_7t        0x00000c5c        0x0
+ .glue_7t       0x00000c5c        0x0 linker stubs
 
-.vfp11_veneer   0x00000b38        0x0
- .vfp11_veneer  0x00000b38        0x0 linker stubs
+.vfp11_veneer   0x00000c5c        0x0
+ .vfp11_veneer  0x00000c5c        0x0 linker stubs
 
-.v4_bx          0x00000b38        0x0
- .v4_bx         0x00000b38        0x0 linker stubs
+.v4_bx          0x00000c5c        0x0
+ .v4_bx         0x00000c5c        0x0 linker stubs
 
-.iplt           0x00000b38        0x0
- .iplt          0x00000b38        0x0 init.o
+.iplt           0x00000c5c        0x0
+ .iplt          0x00000c5c        0x0 init.o
 
-.rel.dyn        0x00000b38        0x0
- .rel.iplt      0x00000b38        0x0 init.o
+.rel.dyn        0x00000c5c        0x0
+ .rel.iplt      0x00000c5c        0x0 init.o
 
-.rodata         0x00000b38       0x65
- .rodata        0x00000b38       0x4e main.o
- *fill*         0x00000b86        0x2 
- .rodata        0x00000b88       0x15 serial.o
+.rodata         0x00000c5c       0x6d
+ .rodata        0x00000c5c       0x56 main.o
+ *fill*         0x00000cb2        0x2 
+ .rodata        0x00000cb4       0x15 serial.o
                 0x10000000                . = ORIGIN (ram)
 
-.data           0x10000000        0x0 load address 0x00000b9d
-                0x00000b9d                INIT_DATA_VALUES = LOADADDR (.data)
+.data           0x10000000        0x0 load address 0x00000cc9
+                0x00000cc9                INIT_DATA_VALUES = LOADADDR (.data)
                 0x10000000                INIT_DATA_START = .
  *(.data)
  .data          0x10000000        0x0 init.o
@@ -95,10 +95,10 @@ LOAD C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2021.10\lib\gcc\arm-no
                 0x10000000                INIT_DATA_END = .
                 0x10000000                BSS_START = .
 
-.igot.plt       0x10000000        0x0 load address 0x00000b9d
+.igot.plt       0x10000000        0x0 load address 0x00000cc9
  .igot.plt      0x10000000        0x0 init.o
 
-.bss            0x10000000       0x24 load address 0x00000b9d
+.bss            0x10000000       0x24 load address 0x00000cc9
  *(.bss)
  .bss           0x10000000        0x0 init.o
  .bss           0x10000000        0x8 main.o
@@ -129,17 +129,17 @@ LOAD linker stubs
  .debug_aranges
                 0x00000040       0x20 serial.o
 
-.debug_line     0x00000000      0x505
+.debug_line     0x00000000      0x5a6
  .debug_line    0x00000000       0xac init.o
- .debug_line    0x000000ac      0x274 main.o
- .debug_line    0x00000320      0x1e5 serial.o
+ .debug_line    0x000000ac      0x315 main.o
+ .debug_line    0x000003c1      0x1e5 serial.o
 
-.debug_str      0x00000000      0x259
+.debug_str      0x00000000      0x2a4
  .debug_str     0x00000000      0x112 init.o
                                 0x124 (size before relaxing)
- .debug_str     0x00000112       0x86 main.o
-                                0x140 (size before relaxing)
- .debug_str     0x00000198       0xc1 serial.o
+ .debug_str     0x00000112       0xd1 main.o
+                                0x155 (size before relaxing)
+ .debug_str     0x000001e3       0xc1 serial.o
                                 0x182 (size before relaxing)
 
 .comment        0x00000000       0x49

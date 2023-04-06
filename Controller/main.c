@@ -37,6 +37,9 @@
 
 #define LEFT_B GPIO_B23
 #define RIGHT_B GPIO_B13
+#define FORWARD_B GPIO_B8
+#define BACKWARD_B GPIO_B9
+#define TRACK_B GPIO_B2
 
 unsigned int count = 0;
 unsigned int direction = 0;
@@ -48,8 +51,11 @@ void ConfigPins(void)
 	GPIO_DIR0 |= BIT15; 
 	GPIO_DIR0 |= BIT1;
 
-	GPIO_DIR0 &= ~(BIT23); // Configure PIO0_23 as input.
-	GPIO_DIR0 &= ~(BIT13); // Configure PIO0_13 as input.
+	GPIO_DIR0 &= ~(BIT23); 	// Configure PIO0_23 as input.
+	GPIO_DIR0 &= ~(BIT13); 	// Configure PIO0_13 as input.
+	GPIO_DIR0 &= ~(BIT8); 	// Configure PIO0_8 as input.
+	GPIO_DIR0 &= ~(BIT9); 	// Configure PIO0_9 as input.
+	GPIO_DIR0 &= ~(BIT2); 	// Configure PIO0_2 as input.
 }
 
 void InitTimer(void)
@@ -118,54 +124,83 @@ void STC_IRQ_Handler(void)
 	SCTIMER_EVFLAG = 0x01; // Clear interrupt flag
 	
 	switch (direction){
+		// STOP
 		case 0: {
+			if (count < 100) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// LEFT
+		case 1: {
+			if (count < 200) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// RIGHT
+		case 2: {
+			if (count < 300) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// FORWARD
+		case 3: {
+			if (count < 400) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// BACKWARD
+		case 4: {
+			if (count < 500) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// TRACK
+		case 5: {
+			if (count < 650) {
+			OUT0 =! OUT0;
+			OUT1 =! OUT0;
+			}
+			else {
+				OUT0 = 0;
+				OUT1 = 0;
+			}
+			break;
+		}
+		// TRACKING
+		case 6: {
 			OUT0 =! OUT0;
 			OUT1 =! OUT0;
 			count = 0;
-			break;
-		}
-		case 1: {
-			if (count < 10) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
-			break;
-		}
-		case 2: {
-			if (count < 20) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
-			break;
-		}
-		case 3: {
-			if (count < 30) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
-			break;
-		}
-		case 4: {
-			if (count < 40) {
-			OUT0 =! OUT0;
-			OUT1 =! OUT0;
-			}
-			else {
-				OUT0 = 0;
-				OUT1 = 0;
-			}
 			break;
 		}
 		default: {
@@ -176,7 +211,7 @@ void STC_IRQ_Handler(void)
 	}
 
 	count++;
-	if (count == 60) count = 0;
+	if (count == 800) count = 0;
 }
 
 int myAtoi(char *str)
@@ -200,12 +235,31 @@ void main(void)
 	delayms(500); // Give PuTTY time to start
 	eputs("Frequency generator using LPC824.  Output is in pin 11.\r\n");
 	while(1) {
-		direction = 0;
-		while (LEFT_B == 0){
-			direction = 1;
+		if (direction == 6) {
+			while (TRACK_B == 0){
+				direction = 0;
+			}
 		}
-		while (RIGHT_B == 0){
-			direction = 2;
+		else {
+			direction = 0;
+			while (LEFT_B == 0){
+				direction = 1;
+			}
+			while (RIGHT_B == 0){
+				direction = 2;
+			}
+			while (FORWARD_B == 0){
+				direction = 3;
+			}
+			while (BACKWARD_B == 0){
+				direction = 4;
+			}
+			if (TRACK_B == 0){
+				while (TRACK_B == 0){
+					direction = 5;
+				}
+				direction = 6;
+			}
 		}
 	}
 	/*
