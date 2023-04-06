@@ -11,12 +11,14 @@
 
 volatile unsigned int servo_counter=0;
 volatile unsigned char LEFT_BACKWARD=150, LEFT_FORWARD=150, RIGHT_FORWARD=150, RIGHT_BACKWARD=150;
+unsigned char overflow_count;
 
 // ~C51~  
 #define LEFT_BACKWARD P2_1
 #define LEFT_FORWARD P2_2
 #define RIGHT_FORWARD P2_3
 #define RIGHT_BACKWARD P2_4
+#define COMPARE P2_5
 
 #define SYSCLK 72000000L
 #define BAUDRATE 115200L
@@ -280,6 +282,9 @@ void main (void)
 	float v[2];
 	float vdiff;
 	float diff_per;
+	float period;
+	int mode = 0;
+	
 
     waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
@@ -292,31 +297,112 @@ void main (void)
 	InitPinADC(1, 6); // Configure P1.6 as analog input
 	InitPinADC(1, 7); // Configure P1.7 as analog input
     InitADC();
-
 	while(1)
 	{
-	    // Read 14-bit value from the pins configured as analog inputs
-		v[0] = Volts_at_Pin(QFP32_MUX_P1_6); // right inductor
-		v[1] = Volts_at_Pin(QFP32_MUX_P1_7); // left inductor
-		vdiff = v[0]-v[1];
-		diff_per=(vdiff/((v[0]+v[1])/2))*100;
-		printf ("V@right=%7.5fV, V@left=%7.5fV, Vdiff=%7.5fV,Percentage:%7.5f%\r", v[0], v[1],vdiff,diff_per);
-		
-			Stop();
-		if ((v[1]-v[0])>0.5) {
-			RightTurn();
+		if(mode == 1)
+		{    
+			while (1)
+			{
+				if (mode == 0)
+				{
+					break;
+				}
+				// Read 14-bit value from the pins configured as analog inputs
+				v[0] = Volts_at_Pin(QFP32_MUX_P1_6); // right inductor
+				v[1] = Volts_at_Pin(QFP32_MUX_P1_7); // left inductor
+				vdiff = v[0]-v[1];
+				diff_per=(vdiff/((v[0]+v[1])/2))*100;
+				printf ("V@right=%7.5fV, V@left=%7.5fV, Vdiff=%7.5fV,Percentage:%7.5f%\r", v[0], v[1],vdiff,diff_per);
+				
+				Stop();
+
+				if ((v[1]-v[0])>0.5) {
+					RightTurn();
+				}
+				else if ((v[0]-v[1]>0.5)) {
+					LeftTurn();
+				}
+				else if((v[0]+v[1])/2>2.3) {
+					Backward();
+				}
+				else if((v[0]+v[1])/2<2.1) {
+					Forward();
+				}
+				
+				waitms(50);
+				
+				if(COMPARE == 0){
+					Stop();
+					mode = 0;
+				}
+				
+			}
 		}
-		else if ((v[0]-v[1]>0.5)) {
-			LeftTurn();
+		else 
+		{
+			while(1)
+			{
+				
+				do {
+					// Reset the counter
+					TL0=0; 
+					TH0=0;
+					TF0=0;
+					overflow_count=0;
+				
+					while(P2_5!=0); // Wait for the signal to be zero
+					while(P2_5!=1); // Wait for the signal to be one
+					TR0=1; // Start the timer
+					while(P2_5!=0) // Wait for the signal to be zero
+					{
+						if(TF0==1) // Did the 16-bit timer overflow?
+						{
+							TF0=0;
+							overflow_count++;
+						}
+					}
+					while(P2_5!=1) // Wait for the signal to be one
+					{
+						if(TF0==1) // Did the 16-bit timer overflow?
+						{
+							TF0=0;
+							overflow_count++;
+						}
+					}
+					TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
+					period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
+				} while ((period * 1000) < 40);
+				
+				printf( "\rT=%f ms    ", period*1000.0);
+				if(period * 1000.0 > 40.0 && period * 1000.0 < 60.0)
+				{
+					Stop();
+				}
+				if(period * 1000.0 > 60.0 && period * 1000.0 < 80.0)
+				{
+					LeftTurn();
+				}
+				if(period * 1000.0 > 80.0 && period * 1000.0 < 110.0)
+				{
+					RightTurn();
+				}
+				if(period * 1000.0 > 110.0 && period * 1000.0 < 135.0)
+				{
+					Forward();
+				}
+				if(period * 1000.0 > 135.0 && period * 1000.0 < 165.0)
+				{
+					Backward();
+				}
+				if(period * 1000.0 > 165.0)
+				{
+					Stop();
+					mode = 1;
+					break;
+				}
+				
+			}  
 		}
-		else if((v[0]+v[1])/2>2.3) {
-			Backward();
-		}
-		else if((v[0]+v[1])/2<2.1) {
-			Forward();
-		}
-		
-		waitms(50);
-	 }  
+	}
 }	
 
