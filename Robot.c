@@ -19,6 +19,7 @@ unsigned char overflow_count;
 #define RIGHT_FORWARD P2_3
 #define RIGHT_BACKWARD P2_4
 #define COMPARE P2_5
+#define MODE_LED P1_5
 
 #define SYSCLK 72000000L
 #define BAUDRATE 115200L
@@ -300,7 +301,8 @@ void main (void)
 	while(1)
 	{
 		if(mode == 1)
-		{    
+		{
+			MODE_LED = 1;    
 			while (1)
 			{
 				if (mode == 0)
@@ -340,6 +342,7 @@ void main (void)
 		}
 		else 
 		{
+			MODE_LED = 0;
 			while(1)
 			{
 				
