@@ -387,9 +387,9 @@ void main (void)
 					}
 					TR0=0; // Stop timer 0, the 24-bit number [overflow_count-TH0-TL0] has the period!
 					period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
-				} while ((period * 1000) < 40);
+				} while ((period * 1000) < 10);
 				
-				if(period * 1000.0 > 40.0 && period * 1000.0 < 60.0)
+				if( period * 1000.0 < 60.0)
 				{
 					Stop();
 				}
