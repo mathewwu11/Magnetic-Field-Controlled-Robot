@@ -19,7 +19,7 @@ unsigned char overflow_count;
 #define RIGHT_FORWARD P2_3
 #define RIGHT_BACKWARD P2_4
 #define COMPARE P2_5
-#define MODE_LED P1_5
+#define MODE_LED P2_6
 
 #define SYSCLK 72000000L
 #define BAUDRATE 115200L
@@ -92,6 +92,20 @@ char _c51_external_startup (void)
 	TI = 1;  // Indicate TX0 ready
   	
 	return 0;
+}
+
+void Set_Pin_Output (unsigned char pin)
+{
+    unsigned char mask;
+
+    mask=(1<<(pin&0x7));
+    switch(pin/0x10)
+    {
+        case 0: P0MDOUT |= mask; break;
+        case 1: P1MDOUT |= mask; break;
+        case 2: P2MDOUT |= mask; break; 
+        case 3: P3MDOUT |= mask; break; 
+    }
 }
 
 void InitADC (void)
@@ -286,6 +300,8 @@ void main (void)
 	float period;
 	int mode = 0;
 	
+	Set_Pin_Output(0x26);
+	MODE_LED = 0;
 
     waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
