@@ -1,8 +1,5 @@
-// ADC.c:  Shows how to use the 14-bit ADC.  This program
-// measures the voltage from some pins of the EFM8LB1 using the ADC.
-//
-// (c) 2008-2018, Jesus Calvino-Fraga
-//
+// Robot.c
+// Authors: James Chan, Lavis Chen, David Hsiao, Weymen Koo, and Mathew Wu
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -300,8 +297,8 @@ void main (void)
 	float period;
 	int mode = 0;
 	
-	Set_Pin_Output(0x26);
-	MODE_LED = 0;
+	Set_Pin_Output(0x26); // set P2_6 (MODE_LED) to digital output
+	MODE_LED = 0; 
 
     waitms(500); // Give PuTTy a chance to start before sending
 	printf("\x1b[2J"); // Clear screen using ANSI escape sequence.
@@ -330,7 +327,6 @@ void main (void)
 				v[1] = Volts_at_Pin(QFP32_MUX_P1_7); // left inductor
 				vdiff = v[0]-v[1];
 				diff_per=(vdiff/((v[0]+v[1])/2))*100;
-				printf ("V@right=%7.5fV, V@left=%7.5fV, Vdiff=%7.5fV,Percentage:%7.5f%\r", v[0], v[1],vdiff,diff_per);
 				
 				Stop();
 
@@ -362,17 +358,18 @@ void main (void)
 			while(1)
 			{
 				
-				do {
+				do 
+				{
 					// Reset the counter
 					TL0=0; 
 					TH0=0;
 					TF0=0;
 					overflow_count=0;
 				
-					while(P2_5!=0); // Wait for the signal to be zero
-					while(P2_5!=1); // Wait for the signal to be one
+					while(COMPARE!=0); // Wait for the signal to be zero
+					while(COMPARE!=1); // Wait for the signal to be one
 					TR0=1; // Start the timer
-					while(P2_5!=0) // Wait for the signal to be zero
+					while(COMPARE!=0) // Wait for the signal to be zero
 					{
 						if(TF0==1) // Did the 16-bit timer overflow?
 						{
@@ -380,7 +377,7 @@ void main (void)
 							overflow_count++;
 						}
 					}
-					while(P2_5!=1) // Wait for the signal to be one
+					while(COMPARE!=1) // Wait for the signal to be one
 					{
 						if(TF0==1) // Did the 16-bit timer overflow?
 						{
@@ -392,7 +389,6 @@ void main (void)
 					period=(overflow_count*65536.0+TH0*256.0+TL0)*(12.0/SYSCLK);
 				} while ((period * 1000) < 40);
 				
-				printf( "\rT=%f ms    ", period*1000.0);
 				if(period * 1000.0 > 40.0 && period * 1000.0 < 60.0)
 				{
 					Stop();
