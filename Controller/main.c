@@ -31,15 +31,12 @@
 
 #define SYSTEM_CLK 30000000L
 #define DEFAULT_F 14910L
+#define F_CPU 60000000L
 
 #define OUT0 GPIO_B15
 #define OUT1 GPIO_B1
 
-#define LEFT_B GPIO_B23
-#define RIGHT_B GPIO_B13
-#define FORWARD_B GPIO_B8
-#define BACKWARD_B GPIO_B9
-#define TRACK_B GPIO_B2
+#define TRACK_B GPIO_B13
 
 unsigned int count = 0;
 unsigned int direction = 0;
@@ -51,11 +48,7 @@ void ConfigPins(void)
 	GPIO_DIR0 |= BIT15; 
 	GPIO_DIR0 |= BIT1;
 
-	GPIO_DIR0 &= ~(BIT23); 	// Configure PIO0_23 as input.
 	GPIO_DIR0 &= ~(BIT13); 	// Configure PIO0_13 as input.
-	GPIO_DIR0 &= ~(BIT8); 	// Configure PIO0_8 as input.
-	GPIO_DIR0 &= ~(BIT9); 	// Configure PIO0_9 as input.
-	GPIO_DIR0 &= ~(BIT2); 	// Configure PIO0_2 as input.
 }
 
 void InitTimer(void)
@@ -117,6 +110,62 @@ void wait_1ms(void)
 void delayms(int len)
 {
 	while(len--) wait_1ms();
+}
+
+/* Start ADC calibration */
+void ADC_Calibration(void)
+{
+	unsigned int saved_ADC_CTRL;
+
+	// Follow the instructions from the user manual (21.3.4 Hardware self-calibration)
+	
+	//To calibrate the ADC follow these steps:
+	
+	//1. Save the current contents of the ADC CTRL register if different from default.	
+	saved_ADC_CTRL=ADC_CTRL;
+	// 2. In a single write to the ADC CTRL register, do the following to start the
+	//    calibration:
+	//    � Set the calibration mode bit CALMODE.
+	//    � Write a divider value to the CLKDIV bit field that divides the system
+	//      clock to yield an ADC clock of about 500 kHz.
+	//    � Clear the LPWR bit.
+	ADC_CTRL = BIT30 | ((300/5)-1); // BIT30=CALMODE, BIT10=LPWRMODE, BIT7:0=CLKDIV
+	// 3. Poll the CALMODE bit until it is cleared.
+	while(ADC_CTRL&BIT30);
+	// Before launching a new A/D conversion, restore the contents of the CTRL
+	// register or use the default values.
+	ADC_CTRL=saved_ADC_CTRL;
+}
+
+
+void InitADC(void)
+{
+	// Will use pins 1 and 2 of TSSOP-20 package (PIO_23 and PIO_17) for ADC.
+	// These correspond to ADC Channel 3 and 9.  Also connect the
+	// VREFN pin (pin 17 of TSSOP-20) to GND, and VREFP the
+	// pin (pin 17 of TSSOP-20) to VDD (3.3V).
+	
+	SYSCON_PDRUNCFG &= ~BIT4; // Power up the ADC
+	SYSCON_SYSAHBCLKCTRL |= BIT24;// Start the ADC Clocks
+	ADC_Calibration();
+	ADC_SEQA_CTRL &= ~BIT31; // Ensure SEQA_ENA is disabled before making changes	
+	
+	ADC_CTRL =1;// Set the ADC Clock divisor
+	SWM_PINENABLE0 &= ~BIT16; // Enable the ADC function on PIO_23 (ADC_3, pin 1 of TSSOP20)	
+	SWM_PINENABLE0 &= ~BIT22; // Enable the ADC function on PIO_17 (ADC_9, pin 9 of TSSOP20)	
+}
+
+// WARNING: in order to use the ADC with other pins, the pins need to be configured in
+// the function above.
+int ReadADC(int channel)
+{
+	ADC_SEQA_CTRL &= ~BIT31; // Ensure SEQA_ENA is disabled before making changes
+	ADC_SEQA_CTRL &= 0xfffff000; // Deselect all previously selected channels	
+	ADC_SEQA_CTRL |= (1<<channel); // Select Channel	
+	ADC_SEQA_CTRL |= BIT31 + BIT18; // Set SEQA and Trigger polarity bits
+	ADC_SEQA_CTRL |= BIT26; // Start a conversion:
+	while( (ADC_SEQA_GDAT & BIT31)==0); // Wait for data valid
+	return ( (ADC_SEQA_GDAT >> 4) & 0xfff);
 }
 
 void STC_IRQ_Handler(void)
@@ -214,18 +263,9 @@ void STC_IRQ_Handler(void)
 	if (count == 800) count = 0;
 }
 
-int myAtoi(char *str)
-{
-    int i, res=0;
-    for (i=0; str[i]!='\0'; ++i) res=res*10+(str[i]-'0');
-    return res;
-}
-
 void main(void)
 {
-	int newF;
-	char buff2[100];
-	unsigned long reload;
+	int j, x, y;
 	
 	ConfigPins();	
 	InitTimer();
@@ -241,17 +281,21 @@ void main(void)
 			}
 		}
 		else {
-			direction = 0;
-			while (LEFT_B == 0){
+			j=ReadADC(9);
+			x=(j*33000)/0xfff * 10;
+			j=ReadADC(3);
+			y=(j*33000)/0xfff * 10;
+
+			if (x < 3){
 				direction = 1;
 			}
-			while (RIGHT_B == 0){
+			if (x > 30){
 				direction = 2;
 			}
-			while (FORWARD_B == 0){
+			if (y < 3){
 				direction = 3;
 			}
-			while (BACKWARD_B == 0){
+			if (y > 30){
 				direction = 4;
 			}
 			if (TRACK_B == 0){
@@ -262,22 +306,4 @@ void main(void)
 			}
 		}
 	}
-	/*
-	while(1)	
-	{
-	    eputs("\r\nNew Frequency: ");
-	    egets(buff2, 100-1);
-	    newF=myAtoi(buff2);
-	    if(newF>300000L)
-	    {
-	       eputs("Warning: High frequencies will cause the interrupt service routine for\r\n"
-	             "the timer to take all available processor time.  Capping to 300000Hz.\r\n");
-	       newF=300000L;
-	    }
-	    reload=SYSTEM_CLK/(newF*2L);
-	    eputs("\r\nFrequency set to: ");
-        PrintNumber(SYSTEM_CLK/(reload*2L), 10, 1);
-	    Reload_SCTIMER(reload);
-	}
-	*/
 }
