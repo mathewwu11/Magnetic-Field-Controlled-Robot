@@ -239,7 +239,7 @@ void STC_IRQ_Handler(void)
 			}
 			break;
 		}
-		// BACKWARD
+		// REVERSE
 		// send square wave for 500/800 clock cycles
 		case 4: {
 			if (count < 500) {
@@ -266,8 +266,8 @@ void STC_IRQ_Handler(void)
 			break;
 		}
 		// TRACKING
+		// while tracking, controller sends a constant 14910 Hz square wave
 		case 6: {
-			// while tracking, controller sends a constant 14910 Hz square wave
 			OUT0 =! OUT0;
 			OUT1 =! OUT0;
 			count = 0;
