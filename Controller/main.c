@@ -267,7 +267,7 @@ void STC_IRQ_Handler(void)
 		}
 		// TRACKING
 		case 6: {
-			// while tracking, controller sends a constant 14910 Hz sqaurewave
+			// while tracking, controller sends a constant 14910 Hz square wave
 			OUT0 =! OUT0;
 			OUT1 =! OUT0;
 			count = 0;
