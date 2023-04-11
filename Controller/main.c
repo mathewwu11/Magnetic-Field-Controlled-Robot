@@ -287,8 +287,8 @@ void STC_IRQ_Handler(void)
 		}
 	}
 
-	count++;
-	if (count == 800) count = 0;
+	count++; // increment count after each clock cycle
+	if (count == 800) count = 0; // Reset count after 800 clock cycles
 }
 
 void main(void)
