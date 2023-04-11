@@ -180,6 +180,7 @@ int ReadADC(int channel)
 	return ( (ADC_SEQA_GDAT >> 4) & 0xfff);
 }
 
+// Read ADC at specified channel and return voltage
 int ReadJoystick(int channel){
 	int j = ReadADC(channel);
 	int v = (j*33000)/0xfff;
@@ -193,6 +194,7 @@ void STC_IRQ_Handler(void)
 	
 	switch (direction){
 		// STOP
+		// send square wave for 100/800 clock cycles
 		case 0: {
 			if (count < 100) {
 			OUT0 =! OUT0;
@@ -205,6 +207,7 @@ void STC_IRQ_Handler(void)
 			break;
 		}
 		// LEFT
+		// send square wave for 200/800 clock cycles
 		case 1: {
 			if (count < 200) {
 			OUT0 =! OUT0;
@@ -217,6 +220,7 @@ void STC_IRQ_Handler(void)
 			break;
 		}
 		// RIGHT
+		// send square wave for 300/800 clock cycles
 		case 2: {
 			if (count < 300) {
 			OUT0 =! OUT0;
@@ -229,6 +233,7 @@ void STC_IRQ_Handler(void)
 			break;
 		}
 		// FORWARD
+		// send square wave for 400/800 clock cycles
 		case 3: {
 			if (count < 400) {
 			OUT0 =! OUT0;
@@ -241,6 +246,7 @@ void STC_IRQ_Handler(void)
 			break;
 		}
 		// BACKWARD
+		// send square wave for 500/800 clock cycles
 		case 4: {
 			if (count < 500) {
 			OUT0 =! OUT0;
@@ -253,6 +259,7 @@ void STC_IRQ_Handler(void)
 			break;
 		}
 		// TRACK
+		// send square wave for 650/800 clock cycles
 		case 5: {
 			if (count < 650) {
 			OUT0 =! OUT0;
@@ -266,7 +273,7 @@ void STC_IRQ_Handler(void)
 		}
 		// TRACKING
 		case 6: {
-			// while tracking, controller sends a constant 14910 Hz signal
+			// while tracking, controller sends a constant 14910 Hz sqaurewave
 			OUT0 =! OUT0;
 			OUT1 =! OUT0;
 			count = 0;
@@ -298,18 +305,18 @@ void main(void)
 	LCDprint("STOP", 1, 1);
 
 	while(1) {
-		// TRACKING
+		// TRACKING MODE
 		if (direction == 6) {
 			// if joystick is pressed, send STOP and enter command mode
 			if (TRACK_B == 0){
 				direction = 0;
 				LCDprint("STOP", 1, 1);
 				while (TRACK_B == 0); // wait for release
-				delayms(100); // debounce delay
+				delayms(50); // debounce delay
 			}
 		}
 
-		// COMMAND
+		// COMMAND MODE
 		else {
 			// if robot is not currently stopped, send STOP
 			if (direction != 0){
@@ -353,7 +360,7 @@ void main(void)
 				LCDprint("TRACKING", 1, 1);
 				while (TRACK_B == 0); // wait for release
 				direction = 6;
-				delayms(100); // debounce delay
+				delayms(50); // debounce delay
 			}
 		}
 	}
