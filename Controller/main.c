@@ -1,9 +1,3 @@
-// Freq_Gen.mk: this LPC824 project shows how to output a square wave
-// at a desired frequency on one of the pins of the microcontroller.
-// Actually two frequencies are generated, f at PIO_15 (pin 11) and 2f
-// at PIO_14 (pin 20).  Pin PIO_14 is directly controlled by the timer.
-// PIO_15 is changed using the interrupt service routine for the timer.
-
 #include "lpc824.h"
 #include "serial.h"
 #include "lcd.h"
